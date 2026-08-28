@@ -1,95 +1,69 @@
-if (WIN32)
-    cmake_minimum_required(VERSION 3.12)
-    add_compile_options(/std:c++17)
-elseif (APPLE)
-    cmake_minimum_required(VERSION 3.17)
-elseif (UNIX)
-    cmake_minimum_required(VERSION 3.17)
-endif ()
-
+cmake_minimum_required(VERSION 3.15)
 project(OcrOnnx)
 
-# Output BIN JNI CLIB
-if (NOT DEFINED OCR_OUTPUT)
-    set(OCR_OUTPUT "BIN")
-    message(STATUS "No OCR_OUTPUT, defaulting to BIN")
-endif ()
-
-add_definitions(-DUNICODE -D_UNICODE)
-
+# ==========================================
+# 1. 强制使用静态 C++ 运行时 (/MT)，与下载的 -mt 包严格匹配
+# ==========================================
 if (MSVC)
-    add_compile_options(/W3)  # MSVC 使用 /W3 (常规警告)
-else()
-    add_compile_options(-Wall) # GCC/Clang 使用 -Wall
+    set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
+    # 清理 CMake 默认可能带入的 /MD 标志，防止 LNK2038 运行时库不匹配错误
+    foreach(flag_var CMAKE_CXX_FLAGS CMAKE_CXX_FLAGS_DEBUG CMAKE_CXX_FLAGS_RELEASE CMAKE_CXX_FLAGS_MINSIZEREL CMAKE_CXX_FLAGS_RELWITHDEBINFO)
+        string(REPLACE "/MD" "/MT" ${flag_var} "${${flag_var}}")
+        string(REPLACE "/MDd" "/MTd" ${flag_var} "${${flag_var}}")
+    endforeach()
 endif()
 
-# OnnxRuntime (CPU only)
-set(OnnxRuntime_FOUND TRUE)
-set(OnnxRuntime_LIBS "C:/onnxruntime/lib/onnxruntime.lib")
-set(OnnxRuntime_INCLUDE_DIRS "C:/onnxruntime/include")
+set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+add_definitions(-DUNICODE -D_UNICODE)
+
+# ==========================================
+# 2. 配置 ONNX Runtime 静态库 (使用相对路径)
+# ==========================================
+set(ONNXRUNTIME_DIR "${CMAKE_CURRENT_SOURCE_DIR}/onnxruntime-v1.23.2-windows-vs2022-x64-static-mt")
+set(OnnxRuntime_INCLUDE_DIRS "${ONNXRUNTIME_DIR}/include")
+set(OnnxRuntime_LIBS "${ONNXRUNTIME_DIR}/lib/onnxruntime.lib")
+
 include_directories(${OnnxRuntime_INCLUDE_DIRS})
 
-if (OnnxRuntime_FOUND)
-    message(STATUS "OnnxRuntime_LIBS: ${OnnxRuntime_LIBS}")
-    message(STATUS "OnnxRuntime_INCLUDE_DIRS: ${OnnxRuntime_INCLUDE_DIRS}")
-else ()
-    message(FATAL_ERROR "onnxruntime Not Found!")
-endif ()
+# Windows 静态链接 ONNX Runtime 必需的系统底层库
+set(ONNX_SYSTEM_LIBS ws2_32.lib bcrypt.lib advapi32.lib userenv.lib ntdll.lib ole32.lib oleaut32.lib)
 
-# OpenCV
-set(BUILD_SHARED_LIBS false)
-find_package(OpenCV REQUIRED)
+# ==========================================
+# 3. 配置 OpenCV 静态库 
+# ==========================================
+set(OPENCV_DIR "${CMAKE_CURRENT_SOURCE_DIR}/opencv-4.11.0-windows-vs2022-x64-mt")
+set(OPENCV_INCLUDE_DIRS "${OPENCV_DIR}/include")
+# RapidAI 的包将静态库统一放在此目录下
+set(OPENCV_LIB_DIR "${OPENCV_DIR}/x64/vc17/staticlib")
 
-if (OpenCV_FOUND)
-    message(STATUS "OpenCV_LIBS: ${OpenCV_LIBS}")
-    message(STATUS "OpenCV_INCLUDE_DIRS: ${OpenCV_INCLUDE_DIRS}")
-else ()
-    message(FATAL_ERROR "opencv Not Found!")
-endif ()
+include_directories(${OPENCV_INCLUDE_DIRS})
 
-# project include
+# 自动收集 staticlib 目录下的所有 .lib 文件 
+# (一次性链接 opencv 核心库以及内置的 zlib, libjpeg, libpng 等所有静态依赖，避免手动逐个指定)
+file(GLOB OPENCV_STATIC_LIBS "${OPENCV_LIB_DIR}/*.lib")
+
+if (NOT OPENCV_STATIC_LIBS)
+    message(FATAL_ERROR "未找到 OpenCV 静态库文件，请检查路径是否正确: ${OPENCV_LIB_DIR}")
+else()
+    message(STATUS "成功找到 ${CMAKE_MATCH_COUNT} 个 OpenCV 静态库文件")
+endif()
+
+# ==========================================
+# 4. 项目源码
+# ==========================================
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/include)
-
-# source
 file(GLOB OCR_SRC ${CMAKE_CURRENT_SOURCE_DIR}/src/*.cpp)
-set(OCR_COMPILE_CODE ${OCR_SRC})
 
-# JNI
-if (OCR_OUTPUT STREQUAL "JNI")
-    find_package(JNI REQUIRED)
-    if (JNI_FOUND)
-        message("JNI FOUND")
-        message(STATUS "JNI_LIBS: ${JNI_LIBS}")
-        message(STATUS "JNI_INCLUDE_DIRS: ${JNI_INCLUDE_DIRS}")
-        include_directories(${JNI_INCLUDE_DIRS})
-    else ()
-        message(FATAL_ERROR "JNI Not Found!")
-    endif ()
-endif ()
+# ==========================================
+# 5. 构建目标 (独立 EXE)
+# ==========================================
+add_executable(OcrOnnx ${OCR_SRC})
+target_compile_definitions(OcrOnnx PRIVATE __EXEC__)
 
-# Build targets
-if (OCR_OUTPUT STREQUAL "JNI")
-    add_library(OcrOnnx SHARED ${OCR_COMPILE_CODE})
-    target_compile_definitions(OcrOnnx PRIVATE __JNI__)
-    target_link_libraries(OcrOnnx ${OnnxRuntime_LIBS} ${OpenCV_LIBS} ${JNI_LIBS})
-elseif (OCR_OUTPUT STREQUAL "CLIB")
-    add_library(OcrOnnx SHARED ${OCR_COMPILE_CODE})
-    target_compile_definitions(OcrOnnx PRIVATE __CLIB__)
-    target_link_libraries(OcrOnnx ${OnnxRuntime_LIBS} ${OpenCV_LIBS})
-elseif (OCR_OUTPUT STREQUAL "BIN")
-    add_executable(OcrOnnx ${OCR_COMPILE_CODE})
-    target_compile_definitions(OcrOnnx PRIVATE __EXEC__)
-    target_link_libraries(OcrOnnx ${OnnxRuntime_LIBS} ${OpenCV_LIBS})
-endif ()
-
-install(TARGETS OcrOnnx EXPORT OcrOnnx)
-
-if (OCR_OUTPUT STREQUAL "CLIB")
-    file(GLOB OCR_INCLUDE ${CMAKE_CURRENT_SOURCE_DIR}/include/*.h)
-    install(FILES ${OCR_INCLUDE} DESTINATION include)
-endif ()
-
-# Windows Link CRT
-if (OCR_BUILD_CRT STREQUAL "True")
-    include(${CMAKE_CURRENT_SOURCE_DIR}/OcrCRTLinkage.cmake)
-endif ()
+# 链接所有库
+target_link_libraries(OcrOnnx 
+    ${OnnxRuntime_LIBS} 
+    ${OPENCV_STATIC_LIBS}  # 链接所有 OpenCV 及其第三方静态依赖
+    ${ONNX_SYSTEM_LIBS}    # 链接 ONNX 所需的 Windows 系统库
+)
