@@ -11,6 +11,7 @@ https://github.com/csukuangfj/onnxruntime-libs/releases/download/v1.29.0/onnxrun
 2、用VS 2022 的 x64 本机工具命令静态编译
 cd opencv-5.0.0
 md opencv-5.0.0-minimal
+  
 3、CMake Configure 配置生成 VS 工程
 
 cmake -G "Visual Studio 17 2022" -A x64 -T v143 -S.  -B build ^
