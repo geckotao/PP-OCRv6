@@ -3,15 +3,25 @@
 目录结构如下
 #
 \OcrOnnx
+
 ├── onnxruntime-v1.29.0-static-mt\
+
 │           ├── include\
+
 │           └──  lib\
+
 ├──  opencv-5.0.0-minimal\
+
 │           ├── include\opencv2\ 
+
 │           └──x64\vc17\staticlib\
+
 ├── include\
+
 ├── src\
+
 ├── models\
+
 └── CMakeLists.txt
 #
 编译
