@@ -1,6 +1,8 @@
 修改自RapidOcrOnnx源码，支持PaddleOCR最新发布的PP-OCRv6模型
 
-目录结构如下
+解压opencv-5.0.0-minimal.zip
+
+保证目录结构如下
 #
 <pre>
 \OcrOnnx
