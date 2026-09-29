@@ -4,8 +4,11 @@ https://github.com/csukuangfj/onnxruntime-libs/releases/download/v1.29.0/onnxrun
 
 
 二、下载OpenCV  https://github.com/opencv/opencv/archive/refs/tags/5.0.0.zip    进行静态编译包制作
+
 解压到 opencv-5.0.0目录
+
 #用VS 2022 的 x64 本机工具命令静态编译
+
 <pre>
 cd  opencv-5.0.0
 
