@@ -1,7 +1,7 @@
-修改自RapidOcrOnnx源码，支持PaddleOCR最新发布的PP-OCRv6模型二、下载本项目C++源码
+修改自RapidOcrOnnx源码，支持PaddleOCR最新发布的PP-OCRv6模型
 
 目录结构如下
-
+#
 \OcrOnnx
 ├── onnxruntime-v1.29.0-static-mt\
 │           ├── include\
@@ -13,7 +13,7 @@
 ├── src\
 ├── models\
 └── CMakeLists.txt
-
+#
 编译
 
 打开 VS 2022 的 x64 本机工具命令提示符并进入代码CMakeLists.txt目录
