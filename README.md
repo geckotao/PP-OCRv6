@@ -2,19 +2,16 @@
 
 https://github.com/csukuangfj/onnxruntime-libs/releases/download/v1.29.0/onnxruntime-win-x64-static_lib-MT-Release-1.29.0.tar.bz2
 
+解压到onnxruntime-v1.29.0-static-mt目录
 
 二、下载OpenCV  https://github.com/opencv/opencv/archive/refs/tags/5.0.0.zip    进行静态编译包制作
-
-解压到 opencv-5.0.0目录
-
-#用VS 2022 的 x64 本机工具命令静态编译
-
 <pre>
-cd  opencv-5.0.0
+1、解压到 opencv-5.0.0目录
 
+2、用VS 2022 的 x64 本机工具命令静态编译
+cd opencv-5.0.0
 md opencv-5.0.0-minimal
-
-#CMake Configure 配置生成 VS 工程
+3、CMake Configure 配置生成 VS 工程
 
 cmake -G "Visual Studio 17 2022" -A x64 -T v143 -S.  -B build ^
 -DCMAKE_INSTALL_PREFIX=%OPENCV_INSTALL% ^
@@ -56,9 +53,10 @@ cmake -G "Visual Studio 17 2022" -A x64 -T v143 -S.  -B build ^
 -DBUILD_JPEG=ON ^
 -DBUILD_PNG=ON
 
-#编译 Release 版本（-j8 使用 8 线程编译）
+4、编译 Release 版本（-j8 使用 8 线程编译）
 cmake --build build --config Release -j 8
-#执行 install，输出头文件 + 静态库到 指定目录opencv-5.0.0-minimal
+  
+5、执行 install，输出头文件 + 静态库到 指定目录opencv-5.0.0-minimal
 cmake --install build --config Release --prefix opencv-5.0.0-minimal
 
 </pre>
