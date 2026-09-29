@@ -1,4 +1,4 @@
-#修改自RapidOcrOnnx，支持最新PP-OCRv6模型
+# 修改自RapidOcrOnnx，支持最新PP-OCRv6模型。
 
 
 一、下载onnxruntime静态编译包（也可自已折腾）
