@@ -1,3 +1,6 @@
+#修改自RapidOcrOnnx，支持最新PP-OCRv6模型
+
+
 一、下载onnxruntime静态编译包（也可自已折腾）
 
 https://github.com/csukuangfj/onnxruntime-libs/releases/download/v1.29.0/onnxruntime-win-x64-static_lib-MT-Release-1.29.0.tar.bz2
